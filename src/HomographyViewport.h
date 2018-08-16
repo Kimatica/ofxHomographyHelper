@@ -2,6 +2,8 @@
 #pragma once
 
 #include "ofMain.h"
+#include "ofxXmlPoco.h"
+
 
 class HomographyViewport {
 
@@ -12,9 +14,9 @@ public:
     void setup(ofRectangle bounds, string name);
     void setup(float x, float y, float w, float h);
     
-    ofMatrix4x4& getTranform(){ return transform; }
+	glm::mat4& getTranform(){ return transform; }
     
-    vector<ofPoint>& getCorners(){ return corners; };
+    vector<glm::vec3>& getCorners(){ return corners; };
     
     bool loadCorners(string path);
     bool saveCorners(string path);
@@ -30,14 +32,14 @@ public:
     
 private:
     
-    vector<ofPoint> corners;
+    vector<glm::vec3> corners;
     ofRectangle bounds;
-    ofMatrix4x4 transform;
+    glm::mat4 transform;
     
     // mouse/keyboard interaction:
     bool bEnabled;
     bool bShiftDown;
-    ofPoint* pickedVertex;
+	glm::vec3* pickedVertex;
     void keyPressed(ofKeyEventArgs& args);
     void keyReleased(ofKeyEventArgs& args);
     void mouseDragged(ofMouseEventArgs& args);
@@ -47,7 +49,7 @@ private:
     // helpers:
     void drawCorners(ofPolyline& corners, const ofMatrix4x4& transform);
     // arrange the corners as a rectagle
-    void cornersToRect(ofPoint* pickedCorner, vector<ofPoint>& points);
+    void cornersToRect(glm::vec3* pickedCorner, vector<glm::vec3>& corners);
     
     string name;
     vector<ofColor> cornerColors;

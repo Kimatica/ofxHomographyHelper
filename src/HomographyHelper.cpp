@@ -1,13 +1,7 @@
 
 #include "HomographyHelper.h"
 
-
-void HomographyHelper::findHomography(vector<ofPoint>& src, vector<ofPoint>& dst, ofMatrix4x4& homography){
-    HomographyHelper::findHomography(&src[0], &dst[0], homography.getPtr());
-}
-
-
-void HomographyHelper::findHomography(ofPoint src[4], ofPoint dst[4], float homography[16]){
+void HomographyHelper::findHomography(vector<glm::vec3>& src, vector<glm::vec3>& dst, glm::mat4& homography){
     // arturo castro - 08/01/2010
     //
     // create the equation system to be solved
@@ -47,12 +41,13 @@ void HomographyHelper::findHomography(ofPoint src[4], ofPoint dst[4], float homo
     // gaussian elimination gives the results of the equation system
     // in the last column of the original matrix.
     // opengl needs the transposed 4x4 matrix:
-    float aux_H[]={ P[0][8],P[3][8],0,P[6][8], // h11  h21 0 h31
-        P[1][8],P[4][8],0,P[7][8], // h12  h22 0 h32
-        0,      0,0,0,       // 0    0   0 0
-        P[2][8],P[5][8],0,1};      // h13  h23 0 h33
+    float aux_H[]={ P[0][8],P[3][8],0,P[6][8],  // h11  h21 0 h31
+        P[1][8],P[4][8],0,P[7][8],				// h12  h22 0 h32
+        0,      0,0,0,							// 0    0   0 0
+        P[2][8],P[5][8],0,1};					// h13  h23 0 h33
     
-    for(int i=0;i<16;i++) homography[i] = aux_H[i];
+    //for(int i=0;i<16;i++) homography[i] = aux_H[i];
+	homography = glm::make_mat4(aux_H);
 }
 
 

@@ -5,10 +5,10 @@
 HomographyViewport::HomographyViewport(){
     // corners defined clockwise from top-left
     // coords are normalized and relative to bounds
-    corners.push_back(ofPoint(0,0));
-    corners.push_back(ofPoint(1,0));
-    corners.push_back(ofPoint(1,1));
-    corners.push_back(ofPoint(0,1));
+    corners.push_back(glm::vec3(0,0, 0));
+    corners.push_back(glm::vec3(1,0, 0));
+    corners.push_back(glm::vec3(1,1, 0));
+    corners.push_back(glm::vec3(0,1, 0));
     
     // colors
     cornerColors.push_back(ofColor::red);
@@ -31,10 +31,10 @@ void HomographyViewport::setup(ofRectangle _bounds, string _name){
 void HomographyViewport::setup(float x, float y, float w, float h){
     bounds.set(x,y,w,h);
     
-    transform.makeIdentityMatrix();
-    transform.postMultScale(bounds.getWidth(), bounds.getHeight(), 1);
-    transform.postMultTranslate(bounds.position);
-    
+    transform = glm::mat4(); //identity
+	glm::scale( transform, glm::vec3(bounds.getWidth(), bounds.getHeight(), 1) );
+	glm::translate(transform, bounds.position);
+
     resetCorners();
     
     enableMouse();
@@ -42,15 +42,15 @@ void HomographyViewport::setup(float x, float y, float w, float h){
 
 
 void HomographyViewport::resetCorners(){
-    corners[0].set(0,0);
-    corners[1].set(1,0);
-    corners[2].set(1,1);
-    corners[3].set(0,1);
+    corners[0] = glm::vec3(0,0, 0);
+    corners[1] = glm::vec3(1,0, 0);
+    corners[2] = glm::vec3(1,1, 0);
+    corners[3] = glm::vec3(0,1, 0);
 }
 
 
 bool HomographyViewport::loadCorners(string path){
-    ofXml xml;
+    ofxXmlPoco xml;
     if(xml.load(path)){
         if(xml.exists("source")){
             xml.setTo("source");
@@ -60,7 +60,7 @@ bool HomographyViewport::loadCorners(string path){
                 float x = xml.getValue<float>("x");
                 float y = xml.getValue<float>("y");
                 
-                corners[i].set(x,y);
+                corners[i] = glm::vec3(x,y, 0);
                 
                 xml.setTo("../");
             }
@@ -72,12 +72,12 @@ bool HomographyViewport::loadCorners(string path){
 
 
 bool HomographyViewport::saveCorners(string path){
-    ofXml xml;
+	ofxXmlPoco xml;
     xml.addChild("corners");
     xml.setTo("//corners");
     for(int i=0; i<corners.size(); i++){
         
-        ofPoint& corner = corners[i];
+		glm::vec3 & corner = corners[i];
         
         xml.setTo("//corners");
         xml.addChild("corner");
@@ -111,11 +111,11 @@ void HomographyViewport::draw(){
     ofSetRectMode(OF_RECTMODE_CENTER);
     for(int i=0; i<corners.size(); i++){
         ofSetColor(cornerColors[i]);
-        ofRect(corners[i] * transform, cornerSize,cornerSize);
+        ofRect(transform * glm::vec4(corners[i], 1), cornerSize,cornerSize);
     }
     ofSetRectMode(OF_RECTMODE_CORNER);
     
-    //ofDrawBitmapStringHighlight(name, bounds.getBottomLeft()+ofPoint(5,20), ofColor::darkGrey);
+    //ofDrawBitmapStringHighlight(name, bounds.getBottomLeft()+glm::vec2(5,20), ofColor::darkGrey);
     
     ofPopStyle();
 }
@@ -158,8 +158,8 @@ void HomographyViewport::keyReleased(ofKeyEventArgs& args){
 
 void HomographyViewport::mouseDragged(ofMouseEventArgs& args){
     if(pickedVertex){
-        ofPoint mouse(args);
-        pickedVertex->set(mouse * transform.getInverse());
+		glm::vec4 mouse(args, 0, 1);
+        *pickedVertex = glm::inverse(transform) * mouse;
         
         // rectangle mode        
         if(bShiftDown){
@@ -170,10 +170,10 @@ void HomographyViewport::mouseDragged(ofMouseEventArgs& args){
 
 
 void HomographyViewport::mousePressed(ofMouseEventArgs& args){
-    ofPoint mouse(args);
+	glm::vec2 mouse(args);
     for(int i = 0; i < 4; i++){
-        ofPoint v = corners[i] * transform;
-        if(v.distance(mouse) < cornerSize){
+		glm::vec2 v = transform * glm::vec4(corners[i], 1);
+        if(glm::distance(v, mouse) < cornerSize){
             pickedVertex = &corners[i];
             break;
         }
@@ -186,7 +186,7 @@ void HomographyViewport::mouseReleased(ofMouseEventArgs& mouse){
 }
 
 
-void HomographyViewport::cornersToRect(ofPoint* pickedCorner, vector<ofPoint>& corners){
+void HomographyViewport::cornersToRect(glm::vec3* pickedCorner, vector<glm::vec3>& corners){
     int pickedIndex = -1;
     for(int i=0; i<4; i++){
         if(&corners[i] == pickedCorner)
@@ -214,8 +214,8 @@ void HomographyViewport::cornersToRect(ofPoint* pickedCorner, vector<ofPoint>& c
         bottom = corners[3].y;
     }
     // update corners
-    corners[0].set(left, top);
-    corners[1].set(right, top);
-    corners[2].set(right, bottom);
-    corners[3].set(left, bottom);
+    corners[0] = glm::vec3(left, top, 0);
+    corners[1] = glm::vec3(right, top, 0);
+    corners[2] = glm::vec3(right, bottom, 0);
+    corners[3] = glm::vec3(left, bottom, 0);
 }
